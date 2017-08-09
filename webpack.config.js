@@ -1,5 +1,6 @@
 const path = require('path');
 const webpack = require('webpack');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
   entry: {
@@ -7,7 +8,7 @@ module.exports = {
   },
   output: {
     path: path.join(__dirname, 'public'),
-    publicPath: '/'
+    filename: '[name].js'
   },
   module: {
     rules: [
@@ -19,6 +20,12 @@ module.exports = {
     ]
   },
   plugins: [
-    new webpack.NoEmitOnErrorsPlugin()
+    new webpack.NoEmitOnErrorsPlugin(),
+    new HtmlWebpackPlugin({
+      title: 'Component Generation Demo',
+      hash: true,
+      filename: 'index.html',
+      template: path.join(__dirname, 'src/index.html'),
+    })
   ]
 }

@@ -10,10 +10,21 @@ const main = (argv) => {
 
   const template = fs.readFileSync(templatePath, 'utf-8');
   const newComponentDirectory = getNewComponentDirectory(componentName);
+  const newComponent = renderTemplate(template, componentName);
+
+  const componentIndex = fs.readFileSync(componentIndexPath, 'utf-8');
+  const newComponentIndex = updateComponentIndex(componentIndex, componentName);
+
+  fs.mkdirSync(newComponentDirectory);
 
   fs.writeFileSync(
     path.join(newComponentDirectory, `${componentName}.js`),
-    renderTemplate(template, componentName)
+    newComponent
+  );
+
+  fs.writeFileSync(
+    componentIndexPath,
+    newComponentIndex
   );
 }
 
@@ -26,6 +37,7 @@ const find = curry((f, arr) => arr.find(f));
 
 // String utilities
 const prepend = curry((toPrepend, str) => toPrepend.concat(str));
+const append = curry((toAppend, str) => str.concat(toAppend))
 const replace = curry((pattern, replaceWith, str) => str.replace(pattern, replaceWith));
 
 // Command line argument parsing
@@ -50,23 +62,10 @@ const getTemplatePathFromArgv = (argv) => (
 // Functions for updating the component index.js
 const componentIndexPath = path.join(__dirname, '../src/components/index.js')
 
-const interpolateNewExport = (oldExport, componentName) => (
-  oldExport.slice(0, -1).concat(`${componentName}\n}`)
-)
-
-const updateComponentIndexImport = (old, componentName) => (
-  prepend(`import ${componentName} from ./${componentName}/${componentName};\n`, old)
-)
-
-const updateComponentIndexExport = (old, componentName) => {
-  const oldExport = old.match(/export \{.\}/g)[0];
-  return replace(oldExport, interpolateNewExport(oldExport, componentName), old)
-}
-
 const updateComponentIndex = (old, componentName) => pipeline(
   old,
-  updateComponentIndexImport,
-  updateComponentIndexExport
+  prepend(`import _${componentName} from './${componentName}/${componentName}';\n`),
+  append(`export const ${componentName} = _${componentName};\n`)
 )
 
 // Functions for generating the new component files
